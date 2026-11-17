@@ -75,7 +75,7 @@ export default function Home() {
     <span className="badge">Lab 08 · Next.js App Router</span>
     <h1>Cloud Notes</h1>
     <p className="muted">Catatan kelas dengan dua jalur data: API Compose lokal atau Supabase Auth + RLS.</p>
-    <p>Mode aktif: <strong>{supabase ? 'Supabase' : 'API lokal'}</strong></p>
+    <p>Mode aktif: <strong>{supabase ? 'Supabase' : 'API lokal'}</strong> · <a href="/ai">Tanya AI →</a></p>
 
     {supabase && !userId && <section>
       <h2>Masuk atau daftar</h2>

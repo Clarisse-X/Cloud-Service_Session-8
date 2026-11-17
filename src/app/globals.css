@@ -21,3 +21,8 @@ button.secondary { background: #e8eef5; color: #123d68; }
 article { border-top: 1px solid #e3e9f0; padding-top: 12px; margin-top: 12px; }
 article h3 { margin: 0 0 4px; }
 article p { white-space: pre-wrap; margin: 0; }
+.ai-demo { overflow-wrap: anywhere; }
+.ai-demo button { min-height: 44px; }
+.ai-prompt { display: grid; gap: 5px; }
+.ai-answer { white-space: pre-wrap; }
+.ai-request-id { font-size: .85rem; }
