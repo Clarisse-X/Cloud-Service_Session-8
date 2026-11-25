@@ -1,0 +1,16 @@
+.git
+.github
+.devcontainer
+.next
+node_modules
+out
+.env
+.env.*
+*.tsbuildinfo
+*.md
+*.pdf
+hasil
+screenshots
+slides
+compose.yaml
+Dockerfile

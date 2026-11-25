@@ -1,12 +1,78 @@
-# Lab 08 — Cloud Notes dengan Next.js lokal
+# Lab 08 — Cloud Notes dengan Next.js dan Docker Compose
 
 **Kebijakan kelas:** Lab ini latihan formatif, tanpa tugas, nilai, atau penyerahan terpisah. Satu proyek besar dikerjakan oleh kelompok **3 orang**, dengan presentasi checkpoint minggu 7 (UTS) dan hasil akhir minggu 14 (UAS). Simpan hasil lab hanya bila berguna sebagai referensi atau bukti proses proyek. Baca [brief proyek kelompok](PROYEK_KELOMPOK.md). Bobot resmi tetap mengikuti RPS/LMS.
 
-Praktik utama memakai **PowerShell, Node 22+, dan Docker Desktop**. Frontend Next.js di port 3000 meneruskan GET/POST melalui Route Handler server ke API Compose Lab 06 di **18006**. Akun cloud tidak diperlukan.
+Satu stack menjalankan **Next.js, API Lab 06, PostgreSQL, dan Redis**. Pilih Docker di laptop atau GitHub Codespaces. Kedua jalur memakai perintah dan latihan yang sama. Browser mengakses Next.js di port 3000. Route Handler Next.js meneruskan GET dan POST ke API pada jaringan internal Docker.
 
-Mulai dari [modul langkah demi langkah](MODUL_MAHASISWA.md) atau [PDF](MODUL_MAHASISWA.pdf). Modul memisahkan terminal backend, frontend, dan pemeriksaan agar perintah tidak tersangkut di server yang sedang berjalan.
+## A. Docker di laptop
 
-## Terminal 1 — backend Lab 06
+1. Buka Docker Desktop sampai engine siap. Image menyediakan Node.js, Python, PostgreSQL, dan Redis. Siapkan satu salinan repo ini melalui Git atau menu **Code → Download ZIP**, ekstrak, lalu buka PowerShell pada foldernya.
+2. Untuk mengambil versi ini lewat Git, jalankan perintah berikut dari folder kerja pilihanmu.
+
+   ```powershell
+   git clone --branch lab08-docker-codespaces --single-branch https://github.com/SeedFlora/meet8CloudService.git
+   cd meet8CloudService
+   ```
+
+3. Jalankan Compose. Perintah pertama menampilkan bagian `Server` jika Docker sudah siap. Build pertama perlu internet untuk mengambil image, source API Lab 06, dan paket aplikasi.
+
+   ```powershell
+   docker version
+   docker compose up --build -d --wait
+   docker compose ps
+   ```
+
+4. Buka [Cloud Notes di port 3000](http://127.0.0.1:3000). Cari tulisan **Mode aktif: API lokal**. Jika port 3000 sudah dipakai, set `$env:LAB08_PORT = '3002'` di PowerShell sebelum `docker compose up`, lalu gunakan port 3002 di browser.
+
+## B. GitHub Codespaces
+
+1. Buka halaman repo pada branch `lab08-docker-codespaces`. Pilih **Code → Codespaces → Create codespace on lab08-docker-codespaces** dan tunggu editor terbuka. GitHub menyediakan Docker melalui konfigurasi `.devcontainer` repo ini. Akses Codespaces mengikuti kuota atau pengaturan akun GitHub masing-masing.
+2. Codespace baru menjalankan Compose otomatis saat persiapan pertama. Jika memakai Codespace yang pernah dihentikan atau stack sudah ditutup, buka **Terminal** dan jalankan dari root repo. `docker compose ps` membantu melihat apakah keempat layanan sudah siap.
+
+   ```bash
+   docker version
+   docker compose up --build -d --wait
+   docker compose ps
+   ```
+
+3. Pada tab **Ports**, cari **Cloud Notes** pada port **3000**. Pilih **Open in Browser** dan pertahankan visibilitas **Private**. Dari terminal Codespace, `http://127.0.0.1:3000` menunjuk ke server di Codespace.
+
+   Jika 3000 belum muncul di daftar, pilih **Add Port**, masukkan `3000`, lalu pastikan visibilitasnya **Private**. [Panduan port GitHub Codespaces](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace)
+
+## Latihan inti untuk kedua jalur
+
+1. Isi judul dan isi catatan latihan di browser, klik **Simpan**, lalu refresh. Temukan kembali judul yang sama di daftar.
+2. Tambahkan `/api/health` dan `/api/ready` ke URL aplikasi pada tab terpisah. Saat normal, keduanya mengembalikan HTTP **200**. `health` mengecek proses Next.js, sedangkan `ready` mengecek API Lab 06.
+3. Jalankan checker dari root repo. Checker membuat satu catatan uji, memeriksa status GET dan POST, request ID, serta respons untuk input yang ditolak.
+
+   ```text
+   docker compose exec -T web npm run check:local
+   ```
+
+4. Simulasikan gangguan di stack latihanmu. Hentikan hanya service `api`, refresh Cloud Notes dan periksa lagi kedua endpoint. `health` tetap **200**, sementara `ready` dan `/api/notes` menjadi **503**. Nyalakan kembali API, lalu cek `ready` dan `/api/notes` kembali **200** serta catatan sebelumnya tetap muncul.
+
+   ```text
+   docker compose stop api
+   docker compose up -d --wait api
+   ```
+
+   Jalankan baris kedua setelah selesai mengamati gangguan. Untuk melihat log Next.js, gunakan `docker compose logs --tail 30 web`.
+
+### Cek keamanan web
+
+- **Validasi di server.** Bandingkan catatan valid dengan judul kosong, JSON bertipe salah, atau judul melewati batas. Checker menunjukkan HTTP **400** untuk bentuk atau isi yang wajib diisi dan **422** untuk panjang yang melampaui batas. Next.js menolak request itu sebelum meneruskannya ke API Lab 06.
+- **Batasi akses jaringan.** Pada `docker compose ps`, hanya `web` yang memiliki pemetaan port host dengan tanda `->`. API, PostgreSQL, dan Redis berada di jaringan internal Compose. Di Codespaces, cek bahwa port **Cloud Notes** berstatus **Private**.
+- **Pisahkan data latihan dan konfigurasi.** Pakai catatan contoh. Untuk pengayaan Supabase, gunakan publishable key di browser dan pertahankan service-role key di server. Uji isolasi catatan antarpengguna melalui RLS dari Lab 07.
+
+### Selesai latihan
+
+Jalankan `docker compose down`. Volume database menyimpan catatan untuk sesi berikutnya. Jika memakai Codespaces, pilih **Stop codespace** setelah menutup latihan. [Cara menghentikan Codespace](https://docs.github.com/en/codespaces/developing-in-a-codespace/stopping-and-starting-a-codespace)
+
+## Jalur manual Node.js
+
+Gunakan jalur ini saat ingin mengedit kode dengan `next dev`, memakai backend dari pertemuan sebelumnya, atau mengikuti [modul Windows lama](MODUL_MAHASISWA.md) dan [PDF](MODUL_MAHASISWA.pdf). Backend berjalan pada port 18006. Modul membagi backend, frontend, dan pemeriksaan ke tiga terminal.
+
+### Terminal 1 — backend Lab 06
 
 Buka PowerShell di folder tempat menyimpan proyek:
 
@@ -21,7 +87,7 @@ curl.exe -i http://127.0.0.1:18006/health
 
 Gunakan clone Lab 06 yang sudah sehat dari pertemuan sebelumnya sebagai pengganti clone baru. Pada clone lama, pertahankan `.env` dan volume. Hasil health harus HTTP 200 dan menyebut PostgreSQL serta Redis.
 
-## Terminal 2 — frontend Lab 08
+### Terminal 2 — frontend Lab 08
 
 Buka PowerShell baru di folder induk yang sama:
 
@@ -37,7 +103,7 @@ npm run dev
 
 Node harus versi **22+**, sesuai seluruh dependensi proyek. Buka <http://localhost:3000>. Buat catatan dan cocokkan hasilnya dengan <http://127.0.0.1:18006/notes>. Biarkan terminal 2 menjalankan Next.js.
 
-## Terminal 3 — pemeriksaan
+### Terminal 3 — pemeriksaan
 
 Buka terminal pada folder `meet8CloudService-local`:
 

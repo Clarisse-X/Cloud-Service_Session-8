@@ -4,6 +4,8 @@
 
 **Subtopik:** App Router, halaman dan komponen, GET/POST Route Handler, batas kode browser/server, konfigurasi Supabase, serta Git deployment ke Vercel. Praktik utama berjalan **lokal di Windows dengan PowerShell**. Bagian cloud berada setelah praktik lokal selesai.
 
+Untuk praktik kelas dengan Docker, ikuti [jalur laptop atau GitHub Codespaces di README](README.md#lab-08--cloud-notes-dengan-nextjs-dan-docker-compose). Langkah di bawah memakai jalur manual dengan Node.js di Windows.
+
 ## 1. Siapkan tiga terminal
 
 Siapkan Docker Desktop yang Engine-nya berjalan, Git, serta Node **22 atau lebih baru**. Versi tersebut memenuhi dependensi Next.js dan Supabase pada lockfile proyek. Dua repo harus berada pada **komputer yang sama**.

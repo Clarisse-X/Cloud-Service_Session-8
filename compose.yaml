@@ -1,0 +1,87 @@
+name: cloud-notes-lab08
+
+services:
+  web:
+    build:
+      context: .
+      target: web
+    init: true
+    environment:
+      LOCAL_API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:${LAB08_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health', {signal: AbortSignal.timeout(2000)}).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    security_opt:
+      - no-new-privileges:true
+    networks: [edge, backend]
+
+  api:
+    # The application and database schema come from the same Lab 06 revision.
+    build: https://github.com/SeedFlora/meet6CloudService.git#c0aed24cdfdc6894af640ca116ad70c8ce7a35af:api
+    environment:
+      APP_ENV: classroom
+      DB_HOST: db
+      DB_NAME: cloudnotes
+      DB_USER: clouduser
+      DB_PASSWORD: ${LAB08_DB_PASSWORD:-local-lab08-only}
+      REDIS_URL: redis://cache:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    security_opt:
+      - no-new-privileges:true
+    networks: [backend]
+
+  db:
+    build:
+      context: .
+      target: database
+      additional_contexts:
+        lab06: https://github.com/SeedFlora/meet6CloudService.git#c0aed24cdfdc6894af640ca116ad70c8ce7a35af
+    environment:
+      POSTGRES_DB: cloudnotes
+      POSTGRES_USER: clouduser
+      POSTGRES_PASSWORD: ${LAB08_DB_PASSWORD:-local-lab08-only}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    networks: [backend]
+
+  cache:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    networks: [backend]
+
+networks:
+  edge:
+  backend:
+    internal: true
+
+volumes:
+  db_data:
+  redis_data:

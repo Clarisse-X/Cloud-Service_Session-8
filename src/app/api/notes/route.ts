@@ -33,15 +33,33 @@ export async function GET() {
   return forward('GET')
 }
 
+function exceedsLength(value: string, limit: number) {
+  if (value.length <= limit) return false
+  if (value.length > limit * 2) return true
+
+  // Match Lab 06, which counts Unicode code points.
+  return Array.from(value).length > limit
+}
+
 export async function POST(request: Request) {
-  let body: { title?: unknown; content?: unknown }
+  let body: unknown
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'JSON tidak valid' }, { status: 400 })
   }
-  if (typeof body.title !== 'string' || !body.title.trim() || typeof body.content !== 'string' || !body.content.trim()) {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ error: 'Isi harus berupa objek JSON' }, { status: 400 })
+  }
+
+  const fields = body as Record<string, unknown>
+  const title = typeof fields.title === 'string' ? fields.title.trim() : ''
+  const content = typeof fields.content === 'string' ? fields.content.trim() : ''
+  if (!title || !content) {
     return NextResponse.json({ error: 'Judul dan isi wajib diisi' }, { status: 400 })
   }
-  return forward('POST', JSON.stringify({ title: body.title.trim(), content: body.content.trim() }))
+  if (exceedsLength(title, 120) || exceedsLength(content, 5000)) {
+    return NextResponse.json({ error: 'Judul maksimal 120 karakter dan isi maksimal 5000 karakter' }, { status: 422 })
+  }
+  return forward('POST', JSON.stringify({ title, content }))
 }
