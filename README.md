@@ -126,6 +126,8 @@ docker compose --profile monitoring ps
 
 Di Codespaces, **Ports** berada di panel bawah di samping **Terminal**. Jika nomor belum terlihat, pilih **Add Port**, ketik nomor, lalu tekan Enter. Pada setiap baris pastikan **Visibility → Private**, kemudian klik ikon globe atau klik kanan **Open in Browser**. Alamat HTTPS milik teman akan berbeda dari alamatmu.
 
+![Panel Ports di Codespaces. Ketiga port 3000, 3301 dan 9091 memiliki ikon gembok dan status Private.](screenshots/monitoring-codespaces-ports.jpg)
+
 ### 3. Lihat angka awal dan pastikan target UP
 
 1. Buka tab Cloud Notes. Buat tab salinan, tambahkan `/api/metrics` pada alamat aplikasi, kemudian tekan Enter. Cari tiga baris di bawah. Baris terakhir berisi angka milikmu. **Catat angka awal** sebelum menguji tombol Simpan.
@@ -151,6 +153,8 @@ Di Codespaces, **Ports** berada di panel bawah di samping **Terminal**. Jika nom
 2. Muat ulang `/api/metrics`. Counter seharusnya naik satu dari angka awal. Tunggu sekitar 6–10 detik, kembali ke tab Prometheus, lalu **Execute** untuk membaca sampel terbaru.
 3. Simpan sekali lagi dengan judul `Metrik dua` dan isi `Percobaan kedua`. Ulangi pengecekan tadi. Misalnya, jika angka awal **0**, urutannya **0 → 1 → 2**. Jika angka awal **7**, hasil akhirnya **9**.
 4. Muat ulang daftar catatan tiga kali. Setelah Prometheus mengambil sampel berikutnya, jalankan kueri yang sama. Nilainya tetap jika hanya kamu yang memakai mesin itu. Di **Graph**, pilih rentang yang mencakup percobaan untuk melihat kenaikannya.
+
+![Formulir dengan tombol Simpan dan catatan yang berhasil muncul di Daftar catatan pada Codespaces.](screenshots/monitoring-codespaces-notes.jpg)
 
 **Dari mana angka itu berasal?** Buka tiga bagian kode berikut sesuai urutan kejadian.
 
@@ -188,6 +192,10 @@ Di Grafana buka **Cloud Notes - Metrik penyimpanan**. Pilih **Last 15 minutes**,
 | **Perkiraan catatan 5 menit** — `job:cloudnotes_notes_created:increase5m{job="cloudnotes_web"}` | **Stat / Instant** menampilkan hasil aturan terakhir. Fungsi `increase` memperkirakan perubahan sampai tepi jendela pengamatan dan memperhitungkan reset counter. Karena itu, setelah tiga simpan, kamu bisa melihat misalnya **3,1**. Ketika lima menit berlalu tanpa simpan baru, perkiraan dapat kembali ke nol. [Fungsi increase](https://prometheus.io/docs/prometheus/latest/querying/functions/#increase) |
 
 ![Dashboard Grafana dengan grafik counter penyimpanan dan panel Stat untuk perkiraan lima menit](screenshots/monitoring-grafana.png)
+
+Pada contoh **Docker lokal** di atas, tiga kali simpan membawa garis dari 0 ke 3. Pada contoh **Codespaces** di bawah, garis mencapai 6, sedangkan Stat membaca 3,1. Garis mencakup semua penyimpanan sejak web dinyalakan. Stat memperkirakan penyimpanan selama lima menit terakhir. Angkamu mengikuti catatan dan waktu percobaanmu sendiri.
+
+![Dashboard langsung dari Codespaces dengan counter terakhir 6 dan perkiraan lima menit 3,1.](screenshots/monitoring-codespaces-grafana.jpg)
 
 Grafana sudah memperoleh sumber data **Lab 08 Prometheus** dari konfigurasi repo. Server Grafana menghubungi `http://prometheus-lab08:9090` lewat jaringan Docker. Browser di laptop mengakses Prometheus lewat port `9091`; browser untuk Codespaces memakai tautan privat dari **Ports**. Keduanya menuju Prometheus di mesin latihan masing-masing. [Lihat koneksi Grafana](monitoring/grafana/provisioning/datasources/prometheus.yml)
 
