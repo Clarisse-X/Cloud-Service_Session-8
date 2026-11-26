@@ -122,7 +122,7 @@ docker compose --profile monitoring ps
 |---|---|---|
 | Cloud Notes | [Buka aplikasi · 3000](http://127.0.0.1:3000) | **Ports → 3000 → Open in Browser** |
 | Prometheus | [Buka target · 9091](http://127.0.0.1:9091/targets) | **Ports → 9091 → Open in Browser**, lalu **Status → Target health** |
-| Grafana | [Buka dashboard kelas · 3301](http://127.0.0.1:3301/d/cloud-notes-metrics/) | **Ports → 3301 → Open in Browser**, lalu **Dashboards → Lab 08 → Cloud Notes · Metrik penyimpanan** |
+| Grafana | [Buka dashboard kelas · 3301](http://127.0.0.1:3301/d/cloud-notes-metrics/) | **Ports → 3301 → Open in Browser**, lalu **Dashboards → Lab 08 → Cloud Notes - Metrik penyimpanan** |
 
 Di Codespaces, **Ports** berada di panel bawah di samping **Terminal**. Jika nomor belum terlihat, pilih **Add Port**, ketik nomor, lalu tekan Enter. Pada setiap baris pastikan **Visibility → Private**, kemudian klik ikon globe atau klik kanan **Open in Browser**. Alamat HTTPS milik teman akan berbeda dari alamatmu.
 
@@ -180,7 +180,7 @@ Baris terakhir menampilkan **400**. Ketik `.exit`, lalu muat ulang `/api/metrics
 
 Di Prometheus buka **Status → Rule health**, perluas grup `cloudnotes_lab`, lalu cari **OK** untuk `job:cloudnotes_notes_created:increase5m`. Sebuah *recording rule* menjalankan kueri secara berkala dan menyimpan hasilnya dengan nama metrik baru. Aturan kelas mengevaluasi perkiraan pertambahan counter lima menit terakhir setiap lima detik. [Lihat rumusnya](monitoring/prometheus/cloudnotes.rules.yml)
 
-Di Grafana buka **Cloud Notes · Metrik penyimpanan**. Pilih **Last 15 minutes**, klik panah di sebelah **Refresh**, lalu pilih **5s**. Baca kedua panel.
+Di Grafana buka **Cloud Notes - Metrik penyimpanan**. Pilih **Last 15 minutes**, klik panah di sebelah **Refresh**, lalu pilih **5s**. Baca kedua panel.
 
 | Panel dan kueri | Cara membaca |
 |---|---|
@@ -224,7 +224,8 @@ Sekarang beri dashboard pertanyaan baru: **berapa tambahan catatan dalam satu me
 2. Klik **Dashboards → New → New dashboard**. Pada layar awal pilih **Custom grid**. Pada laci **Add** di kanan klik kartu **Panel**, lalu **Configure visualization** di panel kosong. Jika lacinya tertutup, klik **+ Add** pada bilah vertikal kanan.
 3. Di **Queries**, pilih data source **Lab 08 Prometheus**. Pada baris **A**, pilih **Code**, tempel kueri `job:cloudnotes_notes_created:increase1m{job="cloudnotes_web"}`, buka **Options**, pilih **Type → Instant**, lalu **Run queries**.
 4. Di kanan buka **All visualizations → Stat**. Untuk panel yang sudah memiliki jenis visual, pilih **Change** dahulu. Pada **Panel options → Title** ketik `Perkiraan catatan 1 menit`. Pada **Standard options → Decimals**, isi `1`.
-5. Klik **Back** untuk kembali ke dashboard, lalu **Save**. Pada dialog pertama, beri judul `Monitoring Cloud Notes Saya`, pilih folder jika diminta, lalu **Save** lagi. Buka **Dashboards**, cari judul itu dan buka kembali. Simpan satu catatan, tunggu sampel dan evaluasi, lalu tekan **Refresh** pada dashboard.
+5. Klik **Back** untuk kembali ke dashboard, lalu **Save**. Pada dialog pertama, beri judul `Monitoring Cloud Notes Saya`, pilih folder jika diminta, lalu **Save** lagi. Untuk judul dashboard dan panel di Codespaces, gunakan huruf A–Z, angka, spasi, atau tanda hubung biasa (`-`). Grafana mengirim judul saat meminta data dan simbol seperti `·` bisa membuat permintaan ditolak.
+   Buka **Dashboards**, cari judul itu dan buka kembali. Pilih **Last 15 minutes** dan **Refresh → 5s** pada dashboard barumu. Simpan satu catatan dan lihat nilainya setelah Prometheus mengambil sampel dan mengevaluasi aturan.
 6. **Coba tampilan kedua.** Masuk **Edit**, pilih judul panel, lalu **Duplicate** di sidebar kanan. Pilih salinannya → **Edit visualization → Change → Time series**. Pada **Options** kueri ubah **Type** ke **Range** dan klik **Run queries**. Beri judul `Riwayat perkiraan 1 menit`. Pada **Graph styles → Style**, pilih **Bars**. Klik **Back**, geser judul panel untuk mengatur posisi, tarik sudut kanan bawah untuk mengubah ukurannya, lalu **Save**. Sekarang kamu punya nilai terbaru dan riwayatnya di satu layar.
 
 Dashboard **Monitoring Cloud Notes Saya** tersimpan di volume Grafana pada mesin latihanmu. Dashboard bawaan dimuat dari JSON ketika stack dijalankan. Jika kamu ingin mendistribusikan perubahan pada dashboard bawaan melalui repo milikmu, edit JSON sumbernya dan pertahankan UID `cloud-notes-metrics` serta UID data source `lab08-prometheus`. [Definisi dashboard bawaan](monitoring/grafana/dashboards/cloud-notes-metrics.json)
