@@ -9,6 +9,7 @@ Cloud Notes menjalankan **Next.js, API Lab 06, PostgreSQL, dan Redis**. Browser 
 | Kalau kamu ingin… | Buka bagian ini |
 |---|---|
 | Menjalankan aplikasi untuk pertama kali | [Docker di laptop (jalur utama)](#a-docker-di-laptop) atau [GitHub Codespaces](#b-github-codespaces) |
+| Membuat proyek baru dan mengenali halaman, layout, serta komponen | [Latihan Next.js dari nol](#latihan-nextjs-dari-nol) |
 | **Membuat catatan dan melihat grafiknya, dari nol** | [Monitoring Cloud Notes dengan Prometheus dan Grafana](#monitoring-cloud-notes) |
 | Membuat metrik satu menit dan mendesain panel sendiri | [Tambahkan recording rule](#metrik-satu-menit) lalu [buat panel Grafana](#panel-grafana-sendiri) |
 | Mencoba alur simpan, memeriksa input, dan memulihkan API | [Latihan inti](#latihan-inti-untuk-kedua-jalur) dan [cek keamanan web](#cek-keamanan-web) |
@@ -90,14 +91,90 @@ Mulai dari folder yang berisi `compose.yaml`. Klik nama berkas di tabel untuk me
 | Berkas | Apa yang akan kamu temukan |
 |---|---|
 | [src/app/page.tsx](src/app/page.tsx) | Judul halaman, kalimat pembuka, formulir, tombol Simpan, serta daftar catatan. |
-| [src/app/globals.css](src/app/globals.css) | Warna dan jarak antarelemen, termasuk aturan `button`, `button:disabled`, dan `button.secondary`. |
-| [src/app/layout.tsx](src/app/layout.tsx) | Judul pada tab browser di dalam `metadata.title` dan pemuatan CSS. |
+| [src/app/globals.css](src/app/globals.css) dan [postcss.config.mjs](postcss.config.mjs) | Pengaturan Tailwind CSS dan gaya dasar, termasuk aturan tombol. |
+| [src/app/layout.tsx](src/app/layout.tsx) dan [src/app/ai/layout.tsx](src/app/ai/layout.tsx) | Layout global berisi dokumen HTML, metadata, dan CSS. Layout bagian `/ai` menambahkan tautan kembali di luar isi halaman. |
+| [PageHeading](src/components/PageHeading.tsx) dan [NoteCard](src/components/NoteCard.tsx) | Komponen React dengan props TypeScript. Judul dipakai pada dua halaman dan kartu dipakai untuk setiap catatan. |
 | [src/app/api/notes/route.ts](src/app/api/notes/route.ts) | Route Handler Next.js untuk GET/POST, validasi masukan, serta penerusan catatan ke API. |
 | [compose.yaml](compose.yaml) dan [Dockerfile](Dockerfile) | Empat layanan inti, dua layanan profil monitoring, port, volume, dan build web. |
 | [Counter penyimpanan](src/lib/note-metrics.ts) dan [endpoint metrik](src/app/api/metrics/route.ts) | Cara web menyimpan nilai counter di memori dan mengirim teks Prometheus dari `/api/metrics`. |
 | [Konfigurasi Prometheus](monitoring/prometheus/prometheus.yml) dan [recording rules](monitoring/prometheus/cloudnotes.rules.yml) | Target yang dibaca, interval lima detik, dan rumus metrik lima menit. |
 | [Sumber Prometheus di Grafana](monitoring/grafana/provisioning/datasources/prometheus.yml) dan [dashboard kelas](monitoring/grafana/dashboards/cloud-notes-metrics.json) | Koneksi internal dan definisi dua panel yang langsung tersedia. |
 | [tests/challenge.mjs](tests/challenge.mjs) | Dua belas pemeriksaan yang dijalankan lewat `npm run check:local`. |
+
+## Latihan Next.js dari nol
+
+### 1. Buat proyek baru dengan TypeScript, Tailwind, dan App Router
+
+Buka terminal pada folder latihan terpisah, misalnya folder kerja lain di drive data laptop. Jika memakai Codespaces, buka terminal baru, buat folder `~/lab08-latihan`, lalu masuk ke folder itu. Pastikan `node --version` menampilkan versi 22 atau lebih baru. Jika Node belum tersedia di laptop, ikuti [panduan instalasi Next.js](https://nextjs.org/docs/app/getting-started/installation). Stack Docker pada bagian A dan B sudah membundel Node untuk Cloud Notes.
+
+```bash
+npx create-next-app@16.4.6 lab08-next-starter --ts --tailwind --app --src-dir --use-npm --no-linter --no-cache-components --disable-git --yes
+cd lab08-next-starter
+npm run dev -- --hostname 0.0.0.0 --port 3010
+```
+
+Tunggu pesan bahwa proyek dibuat dan server siap. Buka [port 3010 di laptop](http://127.0.0.1:3010). Pada Codespaces pilih **Ports → Add Port → 3010 → Open in Browser** dan gunakan visibilitas **Private**. Cloud Notes bisa tetap berjalan di port 3000. [Pilihan resmi create-next-app](https://nextjs.org/docs/app/api-reference/cli/create-next-app)
+
+![Perintah create-next-app dan cuplikan output aktual setelah proyek baru berhasil dibuat](screenshots/11-next-create.png)
+
+### 2. Kenali halaman dan uji satu kelas Tailwind
+
+Buka `src/app/page.tsx` di folder `lab08-next-starter`. Ganti isinya dengan contoh ini dan simpan. Dev server menampilkan perubahan ketika browser dimuat ulang.
+
+```tsx
+export default function Home() {
+  return (
+    <main className="mx-auto max-w-xl px-6 py-16">
+      <h1 className="text-3xl font-semibold text-sky-700">Latihan App Router Lab 08</h1>
+      <p className="mt-3">TypeScript dan Tailwind sudah aktif.</p>
+    </main>
+  )
+}
+```
+
+`page.tsx` memberikan isi alamat `/`. Coba ubah `text-sky-700` menjadi `text-violet-700`, simpan, lalu cocokkan warna judul di browser. Template versi ini memasang Tailwind bersama Turbopack. Repo Cloud Notes menjalankan Tailwind melalui PostCSS dengan utilitas yang sama dan mempertahankan gaya dasarnya. Selesai menguji starter, tekan **Ctrl+C** di terminal yang menjalankannya. [Panduan Tailwind CSS pada Next.js](https://tailwindcss.com/docs/installation/framework-guides/nextjs)
+
+![Kode halaman starter dan judul biru dari kelas Tailwind di browser](screenshots/12-next-page.png)
+
+### 3. Baca komponen dan layout pada Cloud Notes
+
+Kembali ke folder Cloud Notes dan buka alamat aplikasi yang sudah berjalan.
+
+1. Buka [`src/app/layout.tsx`](src/app/layout.tsx). Temukan `<html lang="id">`, metadata, impor CSS, dan posisi `{children}`. Bandingkan judul tab dengan judul di dalam halaman.
+2. Buka [`src/app/ai/layout.tsx`](src/app/ai/layout.tsx), lalu klik **Tanya AI** dari beranda. Layout khusus bagian `/ai` menampilkan tautan **← Cloud Notes**, sedangkan [`src/app/ai/page.tsx`](src/app/ai/page.tsx) menampilkan prompt dan formulir.
+3. Buka [`src/components/PageHeading.tsx`](src/components/PageHeading.tsx) dan cari pemanggilannya pada kedua halaman. Prop `title` memberi teks judul. `children` menerima isi tambahan seperti paragraf pengantar. Ubah kelas `text-balance` menjadi `text-balance text-sky-700` di salinan latihan, lalu bangun ulang `web`. Kedua halaman memakai perubahan yang sama.
+4. Buka [`src/components/NoteCard.tsx`](src/components/NoteCard.tsx). Periksa tipe `title` dan `content`, serta kelas Tailwind `whitespace-pre-wrap`. Buat dua catatan dengan judul dan isi berbeda. Tambahkan baris baru pada salah satu isi. Perhatikan kedua kartu memakai struktur yang sama dan baris baru tetap terlihat. [Contoh layout dan halaman App Router](https://nextjs.org/docs/app/getting-started/layouts-and-pages)
+
+```bash
+docker compose up -d --build --wait --no-deps web
+```
+
+![Kode layout khusus dan halaman Tanya AI dengan tautan kembali](screenshots/13a-next-layout.png)
+
+![Komponen NoteCard dengan props Title dan Content dan dua catatan aktual](screenshots/13b-next-note-card.png)
+
+### 4. Uji GET dan POST pada Route Handler Cloud Notes
+
+Gunakan **Mode aktif: API lokal** dan cek bahwa stack Cloud Notes sehat. Buka [`src/app/api/notes/route.ts`](src/app/api/notes/route.ts) dan cari fungsi `GET` serta `POST`. Di Codespaces jalankan perintah ini dari terminal. Jika memilih port berbeda, sesuaikan nomor port.
+
+```bash
+curl -i http://127.0.0.1:3000/api/notes
+curl -i http://127.0.0.1:3000/api/notes -H 'Content-Type: application/json' -d '{"title":"Uji Route Handler","content":"Catatan POST dari terminal"}'
+curl -i http://127.0.0.1:3000/api/notes
+```
+
+Di PowerShell gunakan bentuk berikut.
+
+```powershell
+Invoke-WebRequest -Uri 'http://127.0.0.1:3000/api/notes'
+$body = @{title='Uji Route Handler'; content='Catatan POST dari terminal'} | ConvertTo-Json -Compress
+Invoke-WebRequest -Uri 'http://127.0.0.1:3000/api/notes' -Method Post -ContentType 'application/json' -Body $body
+Invoke-WebRequest -Uri 'http://127.0.0.1:3000/api/notes'
+```
+
+Baca **200** pada GET dan **201** pada POST. Cocokkan judul yang dibuat dengan hasil GET terakhir, lalu muat ulang Cloud Notes. Inilah jalur penyimpanan lokal melalui Route Handler. Jalur Supabase dan Vercel diuji dengan akun aplikasi dan Table Editor di bagian terpisah. [Route Handler Next.js](https://nextjs.org/docs/app/getting-started/route-handlers)
+
+![Uji aktual pada port 3458 memperlihatkan GET 200, POST 201, GET 200 dan ID yang sama](screenshots/14-next-api.png)
 
 ## Monitoring Cloud Notes
 
@@ -269,7 +346,7 @@ Di Explorer editor, buka **src → app → page.tsx**. Tekan **Ctrl+F** untuk me
 
 | Cari | Ganti menjadi |
 |---|---|
-| `<h1>Cloud Notes</h1>` | `<h1>Cloud Notes Kelas Saya</h1>` |
+| `<PageHeading title="Cloud Notes">` | `<PageHeading title="Cloud Notes Kelas Saya">` |
 | `Catatan kelas dengan dua jalur data: API Compose lokal atau Supabase Auth + RLS.` | `Catat percobaan cloud dan hasil pengamatan kelas.` |
 | `<button disabled={busy}>Simpan</button>` | `<button disabled={busy}>Simpan catatan</button>` |
 | `Belum ada catatan yang terlihat.` | `Belum ada catatan. Tulis hasil percobaan pertamamu di atas.` |

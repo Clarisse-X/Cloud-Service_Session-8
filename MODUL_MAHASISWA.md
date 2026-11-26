@@ -2,7 +2,14 @@
 
 **Kebijakan kelas:** Lab ini latihan formatif, tanpa tugas, nilai, atau penyerahan terpisah. Satu proyek besar dikerjakan oleh kelompok **3 orang**, dengan presentasi checkpoint minggu 7 (UTS) dan hasil akhir minggu 14 (UAS). Simpan hasil lab hanya bila berguna sebagai referensi atau bukti proses proyek. Baca [brief proyek kelompok](PROYEK_KELOMPOK.md). Bobot resmi tetap mengikuti RPS/LMS.
 
-**Subtopik:** App Router, halaman dan komponen, GET/POST Route Handler, batas kode browser/server, monitoring aplikasi, dan integrasi Supabase Auth serta RLS. Docker Desktop di laptop adalah jalur utama. GitHub Codespaces menyediakan jalur yang sama dari browser. Node.js manual dan Vercel tersedia sebagai pengayaan.
+**Subtopik:** inisialisasi Next.js dengan TypeScript, Tailwind dan App Router, halaman serta komponen dan layout, GET/POST Route Handler, mode Supabase Auth dan RLS melalui environment variables, serta deployment dari Git ke Vercel. Docker Desktop di laptop adalah jalur utama untuk stack Cloud Notes. GitHub Codespaces menyediakan jalur yang sama dari browser. Monitoring membantu melihat dampak penyimpanan pada jalur API lokal.
+
+## App Router dari proyek kosong
+
+1. Di folder latihan terpisah, buat starter dengan `npx create-next-app@16.4.6 lab08-next-starter --ts --tailwind --app --src-dir --use-npm --no-linter --no-cache-components --disable-git --yes`. Masuk ke `lab08-next-starter`, lalu jalankan `npm run dev -- --hostname 0.0.0.0 --port 3010`. Buka port **3010** dari browser, dengan visibilitas **Private** pada Codespaces.
+2. Edit `src/app/page.tsx` sesuai contoh README. Ganti teks judul dan satu kelas warna Tailwind, lalu lihat hasilnya di browser. `src/app/layout.tsx` memberi struktur yang dipakai semua halaman.
+3. Kembali ke Cloud Notes. Bandingkan layout global dan `src/app/ai/layout.tsx`. Periksa komponen `PageHeading` di beranda dan halaman Tanya AI serta `NoteCard` pada setiap catatan. Cocokkan props TypeScript dengan nilai yang terlihat.
+4. Buka handler `src/app/api/notes/route.ts`. Kirim POST memakai terminal, baca status 201, lalu ambil daftar lewat GET dan lihat status 200. [Langkah lengkap, kode, dan uji Route Handler](README.md#latihan-nextjs-dari-nol)
 
 ## Praktik utama dengan Docker
 

@@ -1,6 +1,8 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useState } from 'react'
+import { NoteCard } from '@/components/NoteCard'
+import { PageHeading } from '@/components/PageHeading'
 import { supabase } from '@/lib/supabase'
 
 type Note = { id: string | number; title: string; content: string; created_at?: string }
@@ -77,8 +79,9 @@ export default function Home() {
 
   return <main>
     <span className="badge">Lab 08 · Next.js App Router</span>
-    <h1>Cloud Notes</h1>
-    <p className="muted">Catatan kelas dengan dua jalur data: API Compose lokal atau Supabase Auth + RLS.</p>
+    <PageHeading title="Cloud Notes">
+      <p className="muted">Catatan kelas dengan dua jalur data: API Compose lokal atau Supabase Auth + RLS.</p>
+    </PageHeading>
     <p>Mode aktif: <strong>{supabase ? 'Supabase' : 'API lokal'}</strong> · <a href="/ai">Tanya AI →</a></p>
 
     {supabase && !userId && <section>
@@ -104,7 +107,9 @@ export default function Home() {
 
     {message && <p className="error" role="status">{message}</p>}
     <section><h2>Daftar catatan</h2>
-      {notes.length === 0 ? <p className="muted">Belum ada catatan yang terlihat.</p> : notes.map((note) => <article key={note.id}><h3>{note.title}</h3><p>{note.content}</p></article>)}
+      {notes.length === 0 ? <p className="muted">Belum ada catatan yang terlihat.</p> : notes.map((note) => (
+        <NoteCard key={note.id} title={note.title} content={note.content} />
+      ))}
     </section>
   </main>
 }

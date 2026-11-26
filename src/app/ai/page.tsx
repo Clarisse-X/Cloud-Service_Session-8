@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useState } from 'react'
-import Link from 'next/link'
+import { PageHeading } from '@/components/PageHeading'
 
 type Hasil = { status: number; requestId: string | null; ms: number; answer?: string; model?: string; error?: string }
 
@@ -33,11 +33,11 @@ export default function TanyaAI() {
   }
 
   return (
-    <main className="ai-demo">
-      <p className="muted"><Link href="/">← Cloud Notes</Link></p>
-      <h1>Tanya AI</h1>
-      <p className="muted">Browser → <code>/api/ai</code> (Route Handler server) → model OpenAI-compatible (mis. Ollama lokal).
-        Token tidak pernah sampai ke browser.</p>
+    <>
+      <PageHeading title="Tanya AI">
+        <p className="muted">Browser → <code>/api/ai</code> (Route Handler server) → model OpenAI-compatible (mis. Ollama lokal).
+          Token tidak pernah sampai ke browser.</p>
+      </PageHeading>
       <section aria-busy={busy}>
         <form onSubmit={kirim}>
           <div className="ai-prompt">
@@ -64,6 +64,6 @@ export default function TanyaAI() {
           </section>
         ))}
       </div>
-    </main>
+    </>
   )
 }
