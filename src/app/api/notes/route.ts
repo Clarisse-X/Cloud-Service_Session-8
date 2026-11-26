@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { logEvent } from '@/lib/logger'
+import { noteCreated } from '@/lib/note-metrics'
 
 const baseUrl = process.env.LOCAL_API_URL || 'http://127.0.0.1:18006'
 
@@ -14,6 +15,7 @@ async function forward(method: 'GET' | 'POST', body?: string) {
       cache: 'no-store',
     })
     const payload = await upstream.text()
+    if (method === 'POST' && upstream.status === 201) noteCreated()
     logEvent('info', 'notes_proxy', { requestId, method, status: upstream.status, durationMs: Date.now() - started })
     return new NextResponse(payload, {
       status: upstream.status,

@@ -1,0 +1,6 @@
+groups:
+  - name: cloudnotes_lab
+    interval: 5s
+    rules:
+      - record: job:cloudnotes_notes_created:increase5m
+        expr: sum by (job) (increase(cloudnotes_notes_created_total{job="cloudnotes_web"}[5m]))

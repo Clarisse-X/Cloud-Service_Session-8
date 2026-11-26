@@ -1,0 +1,75 @@
+{
+  "uid": "cloud-notes-metrics",
+  "title": "Cloud Notes · Metrik penyimpanan",
+  "tags": ["cloud-notes", "lab08"],
+  "schemaVersion": 42,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Catatan berhasil dibuat",
+      "description": "Jumlah POST pembuatan catatan yang dibalas 201 oleh API sejak proses web ini menyala.",
+      "gridPos": { "h": 10, "w": 15, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "lab08-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "lab08-prometheus" },
+          "editorMode": "code",
+          "expr": "cloudnotes_notes_created_total{job=\"cloudnotes_web\"}",
+          "legendFormat": "Catatan berhasil ({{instance}})",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "custom": { "drawStyle": "line", "lineInterpolation": "stepAfter", "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Perkiraan catatan 5 menit",
+      "description": "Kenaikan counter yang diperkirakan fungsi increase selama lima menit terakhir, dijumlahkan per job.",
+      "gridPos": { "h": 10, "w": 9, "x": 15, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "lab08-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "lab08-prometheus" },
+          "editorMode": "code",
+          "expr": "job:cloudnotes_notes_created:increase5m{job=\"cloudnotes_web\"}",
+          "legendFormat": "Perkiraan catatan",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "color": { "mode": "fixed", "fixedColor": "green" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }
+      }
+    }
+  ]
+}

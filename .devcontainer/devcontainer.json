@@ -5,11 +5,19 @@
     "ghcr.io/devcontainers/features/docker-in-docker:4.1.3": {}
   },
   "postCreateCommand": "docker compose up --build -d --wait",
-  "forwardPorts": [3000],
+  "forwardPorts": [3000, 9091, 3301],
   "portsAttributes": {
     "3000": {
       "label": "Cloud Notes",
       "onAutoForward": "notify"
+    },
+    "9091": {
+      "label": "Prometheus Lab 08",
+      "onAutoForward": "silent"
+    },
+    "3301": {
+      "label": "Grafana Lab 08",
+      "onAutoForward": "silent"
     }
   },
   "otherPortsAttributes": {

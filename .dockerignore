@@ -11,6 +11,7 @@ out
 *.pdf
 hasil
 screenshots
+monitoring
 slides
 compose.yaml
 Dockerfile
