@@ -2,48 +2,49 @@
 
 **Kebijakan kelas:** Lab ini latihan formatif, tanpa tugas, nilai, atau penyerahan terpisah. Satu proyek besar dikerjakan oleh kelompok **3 orang**, dengan presentasi checkpoint minggu 7 (UTS) dan hasil akhir minggu 14 (UAS). Simpan hasil lab hanya bila berguna sebagai referensi atau bukti proses proyek. Baca [brief proyek kelompok](PROYEK_KELOMPOK.md). Bobot resmi tetap mengikuti RPS/LMS.
 
-Satu stack menjalankan **Next.js, API Lab 06, PostgreSQL, dan Redis**. Pilih Docker di laptop atau GitHub Codespaces. Kedua jalur memakai perintah dan latihan yang sama. Browser mengakses Next.js di port 3000. Route Handler Next.js meneruskan GET dan POST ke API pada jaringan internal Docker.
+Cloud Notes menjalankan **Next.js, API Lab 06, PostgreSQL, dan Redis**. Browser membuka Next.js di port 3000. Saat kamu menyimpan catatan, Next.js meneruskannya ke API. Profil **monitoring** menambahkan Prometheus untuk membaca jumlah penyimpanan yang berhasil dan Grafana untuk menggambarnya. Kamu bisa mengikuti latihan yang sama di laptop atau GitHub Codespaces.
 
 ## Mulai di sini
 
 | Kalau kamu ingin… | Buka bagian ini |
 |---|---|
 | Menjalankan aplikasi untuk pertama kali | [Docker di laptop (jalur utama)](#a-docker-di-laptop) atau [GitHub Codespaces](#b-github-codespaces) |
+| **Membuat catatan dan melihat grafiknya, dari nol** | [Monitoring Cloud Notes dengan Prometheus dan Grafana](#monitoring-cloud-notes) |
+| Membuat metrik satu menit dan mendesain panel sendiri | [Tambahkan recording rule](#metrik-satu-menit) lalu [buat panel Grafana](#panel-grafana-sendiri) |
 | Mencoba alur simpan, memeriksa input, dan memulihkan API | [Latihan inti](#latihan-inti-untuk-kedua-jalur) dan [cek keamanan web](#cek-keamanan-web) |
 | Menemukan berkas yang mengatur halaman, warna tombol, dan API | [Peta berkas](#peta-berkas) |
 | **Mengubah tampilan web dan melihat hasilnya** | [Tutorial modifikasi halaman Cloud Notes](#modifikasi-halaman-cloud-notes) |
 | Memakai server pengembangan Node.js | [Jalur manual dengan next dev](#jalur-manual-nodejs) |
 | Menerbitkan versi latihan ke Vercel dengan data dari Supabase | [Pengayaan Supabase dan Vercel di modul mahasiswa](MODUL_MAHASISWA.md#tambahan-b-supabase-dan-vercel) |
 
-Untuk kelas ini, buka [branch lab08-docker-codespaces](https://github.com/SeedFlora/meet8CloudService/tree/lab08-docker-codespaces). Jika ingin mencoba mengubah tampilan, teruskan ke tutorial modifikasi ketika aplikasi masih berjalan, sebelum langkah **Selesai latihan**.
+Untuk kelas ini, gunakan [branch lab08-docker-codespaces](https://github.com/SeedFlora/meet8CloudService/tree/lab08-docker-codespaces). Di versi yang memuat latihan monitoring, folder `monitoring` dan berkas `compose.yaml` terlihat berdampingan. Coba latihan pilihanmu ketika aplikasi masih berjalan, kemudian ikuti **Selesai latihan**.
 
 ## A. Docker di laptop
 
-1. Buka Docker Desktop sampai engine siap. Image menyediakan Node.js, Python, PostgreSQL, dan Redis. Siapkan satu salinan repo ini melalui Git atau menu **Code → Download ZIP**, ekstrak, lalu buka PowerShell pada foldernya.
-2. Untuk mengambil versi ini lewat Git, jalankan perintah berikut dari folder kerja pilihanmu.
+1. Di Windows, pasang Docker Desktop jika belum ada. Jalankan installer dan ikuti petunjuk WSL 2 jika diminta. Buka **Start → Docker Desktop** dan tunggu engine berjalan. Node.js, Python, database, Prometheus, serta Grafana tersedia lewat image Docker. [Panduan instalasi Docker Desktop untuk Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+2. **Pilih satu cara mengambil repo.** Lewat browser, buka [branch kelas](https://github.com/SeedFlora/meet8CloudService/tree/lab08-docker-codespaces), klik **Code → Download ZIP**, lalu **Extract All**. Buka folder hasil ekstrak sampai terlihat `compose.yaml` dan `monitoring`. Klik bilah alamat File Explorer, ketik `powershell`, lalu Enter. Jika sudah memiliki Git, buka PowerShell di folder kerja pilihanmu dan gunakan dua perintah berikut sebagai alternatif ZIP.
 
    ```powershell
    git clone --branch lab08-docker-codespaces --single-branch https://github.com/SeedFlora/meet8CloudService.git
    cd meet8CloudService
    ```
 
-3. Jalankan Compose. Perintah pertama menampilkan bagian `Server` jika Docker sudah siap. Build pertama perlu internet untuk mengambil image, source API Lab 06, dan paket aplikasi.
+3. Periksa folder dan Docker. Ketik `Test-Path .\compose.yaml` dan pastikan hasilnya `True`. Jalankan `docker version` dan cari bagian **Server**, lalu `docker compose version` dan cari nomor versi. Build pertama memerlukan internet untuk mengunduh image dan paket.
+4. **Untuk melihat metrik dan grafik**, lanjut langsung ke [langkah 1 monitoring](#monitoring-cloud-notes). **Untuk latihan Cloud Notes dasar**, jalankan dua perintah ini satu per satu.
 
    ```powershell
-   docker version
    docker compose up --build -d --wait
    docker compose ps
    ```
 
-4. Buka [Cloud Notes di port 3000](http://127.0.0.1:3000). Cari tulisan **Mode aktif: API lokal**. Jika port 3000 sudah dipakai, set `$env:LAB08_PORT = '3002'` di PowerShell sebelum `docker compose up`, lalu gunakan port 3002 di browser.
+5. Untuk latihan dasar, buka [Cloud Notes di port 3000](http://127.0.0.1:3000). Cari tulisan **Mode aktif: API lokal**. Jika port 3000 sudah dipakai, set `$env:LAB08_PORT = '3002'` di PowerShell sebelum `docker compose up`, lalu gunakan port 3002 di browser.
 
 ## B. GitHub Codespaces
 
-1. Buka halaman repo pada branch `lab08-docker-codespaces`. Pilih **Code → Codespaces → Create codespace on lab08-docker-codespaces** dan tunggu editor terbuka. GitHub menyediakan Docker melalui konfigurasi `.devcontainer` repo ini. Akses Codespaces mengikuti kuota atau pengaturan akun GitHub masing-masing.
-2. Codespace baru menjalankan Compose otomatis saat persiapan pertama. Jika memakai Codespace yang pernah dihentikan atau stack sudah ditutup, buka **Terminal** dan jalankan dari root repo. `docker compose ps` membantu melihat apakah keempat layanan sudah siap.
+1. Masuk ke GitHub. Dari halaman branch kelas, klik **Code → Codespaces → Create codespace on lab08-docker-codespaces**, atau buka formulir langsung lewat tautan di akhir langkah ini. Jika formulir menampilkan pilihan, cocokkan repo **SeedFlora/meet8CloudService**, branch **lab08-docker-codespaces**, dan konfigurasi **Cloud Notes (Lab 08)**, lalu klik **Create codespace**. Docker akan berjalan di mesin GitHub. Akses Codespaces mengikuti kuota dan pengaturan akun masing-masing. [Buka formulir Codespaces untuk branch kelas](https://codespaces.new/SeedFlora/meet8CloudService/tree/lab08-docker-codespaces)
+2. Tunggu penyiapan pertama, termasuk `postCreateCommand`, selesai. Empat layanan inti dibangun otomatis. Di editor klik **Terminal → New Terminal**. Pada terminal **bash**, jalankan `ls compose.yaml monitoring` untuk memastikan kedua sumber kelas tersedia, kemudian `docker compose ps`. Salinan baru dari template GitHub kadang menampilkan branch lokal `main`; jika kedua sumber kelas tadi terlihat, lanjutkan di folder itu. Cari `web`, `api`, `db`, dan `cache`. **Untuk metrik dan grafik**, lanjut ke [langkah 1 monitoring](#monitoring-cloud-notes). Jika hanya mengikuti latihan dasar dan keempat layanan masih berhenti sesudah penyiapan, mulai dengan perintah berikut.
 
    ```bash
-   docker version
    docker compose up --build -d --wait
    docker compose ps
    ```
@@ -74,12 +75,12 @@ Untuk kelas ini, buka [branch lab08-docker-codespaces](https://github.com/SeedFl
 ### Cek keamanan web
 
 - **Validasi di server.** Bandingkan catatan valid dengan judul kosong, JSON bertipe salah, atau judul melewati batas. Checker menunjukkan HTTP **400** untuk bentuk atau isi yang wajib diisi dan **422** untuk panjang yang melampaui batas. Next.js menolak request itu sebelum meneruskannya ke API Lab 06.
-- **Batasi akses jaringan.** Pada `docker compose ps`, hanya `web` yang memiliki pemetaan port host dengan tanda `->`. API, PostgreSQL, dan Redis berada di jaringan internal Compose. Di Codespaces, cek bahwa port **Cloud Notes** berstatus **Private**.
+- **Batasi akses jaringan.** Pada profil dasar, `web` menerbitkan port browser. Pada profil monitoring, Prometheus dan Grafana juga menerbitkan port di `127.0.0.1`. API, PostgreSQL, dan Redis tetap berada di jaringan internal Compose. Di Codespaces, periksa bahwa setiap port latihan berstatus **Private**.
 - **Pisahkan data latihan dan konfigurasi.** Pakai catatan contoh. Untuk pengayaan Supabase, gunakan publishable key di browser dan pertahankan service-role key di server. Uji isolasi catatan antarpengguna melalui RLS dari Lab 07.
 
 ### Selesai latihan
 
-Jalankan `docker compose down`. Volume database menyimpan catatan untuk sesi berikutnya. Jika memakai Codespaces, pilih **Stop codespace** setelah menutup latihan. [Cara menghentikan Codespace](https://docs.github.com/en/codespaces/developing-in-a-codespace/stopping-and-starting-a-codespace)
+Jalankan `docker compose --profile monitoring down` jika memakai monitoring atau `docker compose down` untuk empat layanan dasar. Perintah tersebut mempertahankan volume beserta catatan, sampel Prometheus, dan dashboard pribadi yang sudah disimpan. Untuk sesi berikutnya di mesin yang sama, jalankan kembali perintah `up` dari jalur pilihanmu. Di GitHub, buka **Your codespaces**, klik menu tiga titik pada mesin latihanmu dan pilih **Stop codespace**. [Cara menghentikan Codespace](https://docs.github.com/en/codespaces/developing-in-a-codespace/stopping-and-starting-a-codespace)
 
 ## Peta berkas
 
@@ -91,8 +92,155 @@ Mulai dari folder yang berisi `compose.yaml`. Klik nama berkas di tabel untuk me
 | [src/app/globals.css](src/app/globals.css) | Warna dan jarak antarelemen, termasuk aturan `button`, `button:disabled`, dan `button.secondary`. |
 | [src/app/layout.tsx](src/app/layout.tsx) | Judul pada tab browser di dalam `metadata.title` dan pemuatan CSS. |
 | [src/app/api/notes/route.ts](src/app/api/notes/route.ts) | Route Handler Next.js untuk GET/POST, validasi masukan, serta penerusan catatan ke API. |
-| [compose.yaml](compose.yaml) dan [Dockerfile](Dockerfile) | Empat layanan, pemetaan port, volume data, serta cara membangun image web dari kode proyek. |
+| [compose.yaml](compose.yaml) dan [Dockerfile](Dockerfile) | Empat layanan inti, dua layanan profil monitoring, port, volume, dan build web. |
+| [Counter penyimpanan](src/lib/note-metrics.ts) dan [endpoint metrik](src/app/api/metrics/route.ts) | Cara web menyimpan nilai counter di memori dan mengirim teks Prometheus dari `/api/metrics`. |
+| [Konfigurasi Prometheus](monitoring/prometheus/prometheus.yml) dan [recording rules](monitoring/prometheus/cloudnotes.rules.yml) | Target yang dibaca, interval lima detik, dan rumus metrik lima menit. |
+| [Sumber Prometheus di Grafana](monitoring/grafana/provisioning/datasources/prometheus.yml) dan [dashboard kelas](monitoring/grafana/dashboards/cloud-notes-metrics.json) | Koneksi internal dan definisi dua panel yang langsung tersedia. |
 | [tests/challenge.mjs](tests/challenge.mjs) | Dua belas pemeriksaan yang dijalankan lewat `npm run check:local`. |
+
+## Monitoring Cloud Notes
+
+**Sasaran latihan.** Simpan dua catatan di Cloud Notes, buktikan counter naik dua kali, dan temukan perubahan yang sama di Grafana. Sesudah itu, buat metrik satu menit dan panel buatanmu sendiri. Counter, aturan lima menit, koneksi Prometheus, dan dashboard contoh sudah disertakan di branch ini.
+
+### 1. Nyalakan aplikasi dan alat monitoring
+
+- **Laptop baru** — selesaikan langkah 1–3 di [Docker di laptop](#a-docker-di-laptop) sampai PowerShell berada di folder `compose.yaml` dan `docker version` menampilkan **Server**.
+- **Codespace baru** — selesaikan langkah 1–2 di [GitHub Codespaces](#b-github-codespaces). Tunggu empat layanan awal siap. Gunakan terminal **bash** di editor browser.
+
+Di terminal yang sudah kamu siapkan, jalankan baris berikut satu per satu. Perintah pertama juga bisa dipakai jika sebelumnya hanya menyalakan latihan dasar.
+
+```text
+docker compose --profile monitoring up --build -d --wait
+docker compose --profile monitoring ps
+```
+
+**Periksa hasilnya.** Cari enam layanan dengan status sehat: `web`, `api`, `db`, `cache`, `prometheus-lab08`, dan `grafana-lab08`. Biarkan semuanya berjalan selama latihan.
+
+### 2. Buka tiga tab di browser
+
+| Tab | Docker di laptop | GitHub Codespaces |
+|---|---|---|
+| Cloud Notes | [Buka aplikasi · 3000](http://127.0.0.1:3000) | **Ports → 3000 → Open in Browser** |
+| Prometheus | [Buka target · 9091](http://127.0.0.1:9091/targets) | **Ports → 9091 → Open in Browser**, lalu **Status → Target health** |
+| Grafana | [Buka dashboard kelas · 3301](http://127.0.0.1:3301/d/cloud-notes-metrics/) | **Ports → 3301 → Open in Browser**, lalu **Dashboards → Lab 08 → Cloud Notes · Metrik penyimpanan** |
+
+Di Codespaces, **Ports** berada di panel bawah di samping **Terminal**. Jika nomor belum terlihat, pilih **Add Port**, ketik nomor, lalu tekan Enter. Pada setiap baris pastikan **Visibility → Private**, kemudian klik ikon globe atau klik kanan **Open in Browser**. Alamat HTTPS milik teman akan berbeda dari alamatmu.
+
+### 3. Lihat angka awal dan pastikan target UP
+
+1. Buka tab Cloud Notes. Buat tab salinan, tambahkan `/api/metrics` pada alamat aplikasi, kemudian tekan Enter. Cari tiga baris di bawah. Baris terakhir berisi angka milikmu. **Catat angka awal** sebelum menguji tombol Simpan.
+
+   ```text
+   # HELP cloudnotes_notes_created_total Successful note creations seen by this web process.
+   # TYPE cloudnotes_notes_created_total counter
+   cloudnotes_notes_created_total 0
+   ```
+
+2. Di tab Prometheus buka **Status → Target health**. Cari job `cloudnotes_web`, endpoint `http://web:3000/api/metrics`, dan status **UP**. UP berarti sampel terakhir berhasil dibaca. Prometheus mengambil satu sampel setiap lima detik.
+3. Pilih **Query**, masukkan `up{job="cloudnotes_web"}`, klik **Execute** lalu pilih **Table**. Nilai yang diharapkan adalah **1**. Ganti dengan kueri berikut dan klik **Execute** lagi. Tunggu sekitar 15 detik untuk memberi Prometheus beberapa sampel awal sebelum percobaan berikut.
+
+   ```promql
+   cloudnotes_notes_created_total{job="cloudnotes_web"}
+   ```
+
+![Target cloudnotes_web berstatus UP setelah Prometheus membaca endpoint metrik](screenshots/monitoring-target.png)
+
+### 4. Simpan dua catatan dan buktikan apa yang dihitung
+
+1. Di tab Cloud Notes, isi **Judul** dengan `Metrik satu`, dan **Isi** dengan `Percobaan pertama`. Klik **Simpan** sekali. Tunggu sampai catatan muncul di daftar.
+2. Muat ulang `/api/metrics`. Counter seharusnya naik satu dari angka awal. Tunggu sekitar 6–10 detik, kembali ke tab Prometheus, lalu **Execute** untuk membaca sampel terbaru.
+3. Simpan sekali lagi dengan judul `Metrik dua` dan isi `Percobaan kedua`. Ulangi pengecekan tadi. Misalnya, jika angka awal **0**, urutannya **0 → 1 → 2**. Jika angka awal **7**, hasil akhirnya **9**.
+4. Muat ulang daftar catatan tiga kali. Setelah Prometheus mengambil sampel berikutnya, jalankan kueri yang sama. Nilainya tetap jika hanya kamu yang memakai mesin itu. Di **Graph**, pilih rentang yang mencakup percobaan untuk melihat kenaikannya.
+
+**Dari mana angka itu berasal?** Buka tiga bagian kode berikut sesuai urutan kejadian.
+
+| Ketika kamu… | Yang dilakukan aplikasi |
+|---|---|
+| Menyimpan catatan | Route `/api/notes` memanggil `noteCreated()` setelah API mengembalikan **201** untuk **POST**. GET membaca daftar. Judul kosong menghasilkan 400 sebelum permintaan diteruskan. [Lihat pemicu counter](src/app/api/notes/route.ts) |
+| Membuka `/api/metrics` | `metricsText()` menyusun HELP, TYPE, dan nilai counter. Nilai disimpan di memori proses web dan mulai dari nol saat proses baru berjalan. Catatan yang sudah tersimpan di PostgreSQL tetap bisa dibaca setelah web di-restart. [Lihat counter](src/lib/note-metrics.ts) · [Lihat endpoint](src/app/api/metrics/route.ts) |
+| Menjalankan checker | Checker melakukan beberapa uji dan membuat satu catatan valid. Counter naik satu dari penyimpanan itu. [Lihat checker](tests/challenge.mjs) |
+
+<details>
+<summary>Uji tambahan: buktikan permintaan berstatus 400 mempertahankan nilai counter</summary>
+
+Catat nilainya. Di terminal proyek jalankan `docker compose exec web node` untuk membuka Node di kontainer web. Pada prompt `>`, ketik setiap baris berikut dan tekan Enter.
+
+```js
+const url = 'http://127.0.0.1:3000/api/notes'
+const headers = {'Content-Type': 'application/json'}
+const body = JSON.stringify({title: '', content: 'Uji judul kosong'})
+(await fetch(url, {method: 'POST', headers, body})).status
+```
+
+Baris terakhir menampilkan **400**. Ketik `.exit`, lalu muat ulang `/api/metrics` dan cocokkan counter dengan nilai sebelumnya.
+
+</details>
+
+### 5. Hubungkan angka mentah dengan dua panel contoh
+
+Di Prometheus buka **Status → Rule health**, perluas grup `cloudnotes_lab`, lalu cari **OK** untuk `job:cloudnotes_notes_created:increase5m`. Sebuah *recording rule* menjalankan kueri secara berkala dan menyimpan hasilnya dengan nama metrik baru. Aturan kelas mengevaluasi perkiraan pertambahan counter lima menit terakhir setiap lima detik. [Lihat rumusnya](monitoring/prometheus/cloudnotes.rules.yml)
+
+Di Grafana buka **Cloud Notes · Metrik penyimpanan**. Pilih **Last 15 minutes**, klik panah di sebelah **Refresh**, lalu pilih **5s**. Baca kedua panel.
+
+| Panel dan kueri | Cara membaca |
+|---|---|
+| **Catatan berhasil dibuat** — `cloudnotes_notes_created_total{job="cloudnotes_web"}` | **Time series / Range** menggambar counter mentah sepanjang rentang tampilan. Ujung garis mengikuti nilai terbaru di Prometheus. |
+| **Perkiraan catatan 5 menit** — `job:cloudnotes_notes_created:increase5m{job="cloudnotes_web"}` | **Stat / Instant** menampilkan hasil aturan terakhir. Fungsi `increase` memperkirakan perubahan sampai tepi jendela pengamatan dan memperhitungkan reset counter. Karena itu, setelah tiga simpan, kamu bisa melihat misalnya **3,1**. Ketika lima menit berlalu tanpa simpan baru, perkiraan dapat kembali ke nol. [Fungsi increase](https://prometheus.io/docs/prometheus/latest/querying/functions/#increase) |
+
+![Dashboard Grafana dengan grafik counter penyimpanan dan panel Stat untuk perkiraan lima menit](screenshots/monitoring-grafana.png)
+
+Grafana sudah memperoleh sumber data **Lab 08 Prometheus** dari konfigurasi repo. Server Grafana menghubungi `http://prometheus-lab08:9090` lewat jaringan Docker. Browser di laptop mengakses Prometheus lewat port `9091`; browser untuk Codespaces memakai tautan privat dari **Ports**. Keduanya menuju Prometheus di mesin latihan masing-masing. [Lihat koneksi Grafana](monitoring/grafana/provisioning/datasources/prometheus.yml)
+
+<a id="metrik-satu-menit"></a>
+### 6. Buat metrik baru untuk satu menit
+
+Sekarang beri dashboard pertanyaan baru: **berapa tambahan catatan dalam satu menit terakhir?** Kamu akan memakai counter yang sama dan menambahkan satu recording rule pada salinan proyekmu.
+
+1. Di laptop buka **VS Code → File → Open Folder** dan pilih folder yang berisi `compose.yaml`. Di Codespaces gunakan **Explorer** di kiri. Buka **monitoring → prometheus → cloudnotes.rules.yml**.
+2. Cari daftar `rules:` di bawah grup `cloudnotes_lab`. Tambahkan dua baris berikut tepat di bawah aturan lima menit yang sudah ada. Sejajarkan tanda `-` baru dengan tanda `-` milik `record` lama. Pertahankan spasi awal dan tekan **Ctrl+S**.
+
+   ```yaml
+         - record: job:cloudnotes_notes_created:increase1m
+           expr: sum by (job) (increase(cloudnotes_notes_created_total{job="cloudnotes_web"}[1m]))
+   ```
+
+3. Di terminal proyek, periksa berkas yang disimpan. Perintah pertama memakai `promtool` dari image kelas. Cari **SUCCESS** dengan **2 rules found**. Jika ada pesan kesalahan, perbaiki baris YAML yang disebutkan dan ulangi perintah pertama. Setelah sukses, jalankan perintah kedua untuk memuat aturan baru.
+
+   ```text
+   docker compose --profile monitoring run --rm --no-deps --entrypoint promtool prometheus-lab08 check rules /etc/prometheus/cloudnotes.rules.yml
+   docker compose --profile monitoring up -d --no-deps --force-recreate --wait prometheus-lab08
+   ```
+
+4. Buka kembali **Prometheus → Status → Rule health**. Cari dua nama, `increase5m` dan `increase1m`, keduanya **OK**. Tunggu dua pengambilan sampel dan satu evaluasi. Simpan satu catatan baru di Cloud Notes lalu klik **Query → Execute** dengan kueri di bawah. Setelah sekitar satu menit tanpa simpan baru, jalankan lagi. Bandingkan hasilnya dengan aturan lima menit.
+
+   ```promql
+   job:cloudnotes_notes_created:increase1m{job="cloudnotes_web"}
+   ```
+
+<a id="panel-grafana-sendiri"></a>
+### 7. Tambahkan panel untuk metrik buatanmu
+
+1. Pada tab Grafana klik **Sign in**. Jika tombolnya tersembunyi, buka `/login` pada alamat Grafana yang sama. Untuk volume latihan baru di laptop atau Codespace privatmu, pengguna awal adalah `admin` dengan sandi awal `admin`. Ikuti permintaan mengganti sandi. Jika sudah pernah masuk, gunakan sandi yang kamu simpan.
+2. Klik **Dashboards → New → New dashboard**. Pada layar awal pilih **Custom grid**. Pada laci **Add** di kanan klik kartu **Panel**, lalu **Configure visualization** di panel kosong. Jika lacinya tertutup, klik **+ Add** pada bilah vertikal kanan.
+3. Di **Queries**, pilih data source **Lab 08 Prometheus**. Pada baris **A**, pilih **Code**, tempel kueri `job:cloudnotes_notes_created:increase1m{job="cloudnotes_web"}`, buka **Options**, pilih **Type → Instant**, lalu **Run queries**.
+4. Di kanan buka **All visualizations → Stat**. Untuk panel yang sudah memiliki jenis visual, pilih **Change** dahulu. Pada **Panel options → Title** ketik `Perkiraan catatan 1 menit`. Pada **Standard options → Decimals**, isi `1`.
+5. Klik **Back** untuk kembali ke dashboard, lalu **Save**. Pada dialog pertama, beri judul `Monitoring Cloud Notes Saya`, pilih folder jika diminta, lalu **Save** lagi. Buka **Dashboards**, cari judul itu dan buka kembali. Simpan satu catatan, tunggu sampel dan evaluasi, lalu tekan **Refresh** pada dashboard.
+6. **Coba tampilan kedua.** Masuk **Edit**, pilih judul panel, lalu **Duplicate** di sidebar kanan. Pilih salinannya → **Edit visualization → Change → Time series**. Pada **Options** kueri ubah **Type** ke **Range** dan klik **Run queries**. Beri judul `Riwayat perkiraan 1 menit`. Pada **Graph styles → Style**, pilih **Bars**. Klik **Back**, geser judul panel untuk mengatur posisi, tarik sudut kanan bawah untuk mengubah ukurannya, lalu **Save**. Sekarang kamu punya nilai terbaru dan riwayatnya di satu layar.
+
+Dashboard **Monitoring Cloud Notes Saya** tersimpan di volume Grafana pada mesin latihanmu. Dashboard bawaan dimuat dari JSON ketika stack dijalankan. Jika kamu ingin mendistribusikan perubahan pada dashboard bawaan melalui repo milikmu, edit JSON sumbernya dan pertahankan UID `cloud-notes-metrics` serta UID data source `lab08-prometheus`. [Definisi dashboard bawaan](monitoring/grafana/dashboards/cloud-notes-metrics.json)
+
+### Jika angka atau halaman belum muncul
+
+| Gejala | Langkah berikutnya |
+|---|---|
+| `no configuration file provided` atau layanan monitoring tidak muncul | Buka kembali terminal di folder dengan `compose.yaml` dan folder `monitoring`, pada branch kelas. Jalankan `docker compose --profile monitoring config --services` dan cocokkan enam nama layanan, lalu mulai dari langkah 1. |
+| `port is already allocated` di Windows | Untuk port yang bentrok, set variabelnya di PowerShell yang sama, misalnya `$env:LAB08_GRAFANA_PORT='3302'`, `$env:LAB08_PROMETHEUS_PORT='9092'` atau `$env:LAB08_PORT='3002'`. Jalankan ulang perintah `up`, lalu buka nomor baru untuk layanan itu. URL Docker pada data source tetap `http://prometheus-lab08:9090`. |
+| Codespaces membuka 502 atau halaman login GitHub | Tunggu build selesai, jalankan perintah `ps` pada langkah 1, lalu buka kembali baris **Ports** milik mesinmu. Masuk dengan akun pemilik Codespace dan pertahankan **Private**. |
+| Target `DOWN` atau metrik kosong | Buka `/api/metrics` dari tab Cloud Notes. Periksa log dengan `docker compose --profile monitoring logs --tail 30 web prometheus-lab08`. Cocokkan job `cloudnotes_web` dan target `web:3000`. |
+| Counter terlihat, tetapi panel lima menit menampilkan **No data** | Cari rule pada **Status → Rule health**, tunggu beberapa sampel, pilih **Last 15 minutes** dan klik **Refresh**. Nilai nol setelah cukup sampel berarti belum ada kenaikan dalam jendela itu. |
+| Grafana terlihat tetapi tombol **Edit** tidak ada | Tampilan awal mengizinkan pengunjung melihat grafik. Masuk melalui `/login` di instance privatmu dan ikuti langkah 7. |
+
+Saat selesai gunakan `docker compose --profile monitoring down`. Di Codespaces, lanjutkan dengan **Stop codespace**. [Penutupan dan penyimpanan data](#selesai-latihan)
 
 ## Modifikasi halaman Cloud Notes
 
@@ -163,7 +311,7 @@ git diff -- src/app/page.tsx src/app/globals.css src/app/layout.tsx
 
 **Menyimpan hasil ke GitHub sendiri (opsional).** Jika ingin membawa desain ke mesin lain, buat fork yang menyertakan branch `lab08-docker-codespaces` (di formulir fork, kosongkan pilihan menyalin hanya branch default jika perlu). Pilih branch kelas di fork milikmu sebelum clone atau membuka Codespace. Setelah mengedit, buka **Source Control**, tinjau perubahan pada `page.tsx`, `globals.css` dan `layout.tsx`, klik **+** untuk file yang ingin disimpan, lalu **Commit** dan **Sync Changes** atau **Publish Branch**. Buka branch itu di GitHub dan periksa perubahan file. Catatan dalam database tetap berada di volume Docker masing-masing.
 
-Setelah selesai, ikuti [cara menutup stack dan Codespace](#selesai-latihan). Untuk mengubah judul, warna, dan isi panel Grafana, buka [latihan modifikasi Grafana dan simulator di Teori 10](https://github.com/SeedFlora/meet10CloudService/blob/main/ml-monitoring/README.md#modifikasi-tampilan).
+Saat Cloud Notes masih berjalan, kamu bisa melanjutkan ke [latihan metrik dan panel Grafana di Lab 08](#monitoring-cloud-notes). Contoh terpisah untuk monitoring model ada di [latihan Grafana dan simulator Teori 10](https://github.com/SeedFlora/meet10CloudService/blob/main/ml-monitoring/README.md#modifikasi-tampilan). Sesudah latihan terakhir, ikuti [cara menutup stack dan Codespace](#selesai-latihan).
 
 ## Jalur manual Node.js
 
