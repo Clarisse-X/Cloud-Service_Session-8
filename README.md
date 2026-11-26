@@ -15,6 +15,7 @@ Cloud Notes menjalankan **Next.js, API Lab 06, PostgreSQL, dan Redis**. Browser 
 | Menemukan berkas yang mengatur halaman, warna tombol, dan API | [Peta berkas](#peta-berkas) |
 | **Mengubah tampilan web dan melihat hasilnya** | [Tutorial modifikasi halaman Cloud Notes](#modifikasi-halaman-cloud-notes) |
 | Memakai server pengembangan Node.js | [Jalur manual dengan next dev](#jalur-manual-nodejs) |
+| Mencoba Supabase di Docker lokal atau Codespaces | [Mode Supabase di Docker Compose](#mode-supabase-di-docker-compose) |
 | Menerbitkan versi latihan ke Vercel dengan data dari Supabase | [Pengayaan Supabase dan Vercel di modul mahasiswa](MODUL_MAHASISWA.md#tambahan-b-supabase-dan-vercel) |
 
 Untuk kelas ini, gunakan [branch lab08-docker-codespaces](https://github.com/SeedFlora/meet8CloudService/tree/lab08-docker-codespaces). Di versi yang memuat latihan monitoring, folder `monitoring` dan berkas `compose.yaml` terlihat berdampingan. Coba latihan pilihanmu ketika aplikasi masih berjalan, kemudian ikuti **Selesai latihan**.
@@ -415,4 +416,57 @@ Endpoint demo tidak memiliki autentikasi dan dinonaktifkan pada build produksi s
 - [Git opsional ke repo pribadi](PANDUAN_GIT.md)
 - [Proyek kelompok](PROYEK_KELOMPOK.md)
 
-Bagian tambahan modul menjelaskan Supabase dan Git deployment ke Vercel. `.env.local` berada pada root repo, `LOCAL_API_URL` hanya dipakai server, sedangkan `NEXT_PUBLIC_SUPABASE_*` terlihat di browser. Gunakan hanya URL dan publishable key pada `NEXT_PUBLIC_`; service role/secret key tidak boleh berada di sana. Restart server sesudah mengubah konfigurasi.
+### Mode Supabase di Docker Compose
+
+Cloud Notes pada mode ini memakai Supabase Auth untuk masuk dan tabel `public.notes` untuk menyimpan catatan. Siapkan proyek Supabase latihan terlebih dahulu. Sesudah itu, gunakan jalur Docker di laptop atau Codespaces yang sama seperti pada bagian A atau B.
+
+#### 1. Siapkan tabel, URL, dan kunci proyek
+
+1. Buka [Dashboard Supabase](https://supabase.com/dashboard/projects), lalu pilih proyek latihan. Di **Table Editor**, pilih skema **public** dan cari tabel **notes**. Kolom yang dipakai aplikasi adalah `id`, `title`, `content`, `user_id`, dan `created_at`.
+2. Jika tabel belum ada, buka **SQL Editor → New query** di proyek latihan, tempel [`schema.sql` dari Lab 07](https://github.com/SeedFlora/meet7CloudService/blob/main/schema.sql), lalu klik **Run**. Buka kembali **Table Editor → notes** dan pastikan RLS aktif. Jika proyek sudah memiliki tabel dan kebijakan sendiri, periksa kecocokannya sebelum menjalankan skrip.
+3. Pada bagian **Connect**, salin **Project URL** dan **Publishable key** dari proyek yang sama. Kunci aplikasi publik biasanya diawali `sb_publishable_`. Gunakan hanya kunci publishable pada konfigurasi browser. [Panduan kunci Supabase](https://supabase.com/docs/guides/getting-started/api-keys)
+4. Di Explorer, buka folder yang berisi `compose.yaml`. Buat file **.env** atau buka file itu jika sudah ada. Isi dua baris berikut dengan nilai proyekmu. Nilai contoh di bawah hanya penanda. `.env.example` adalah template kosong untuk dibagikan. Jika kamu sudah terlanjur mengisi template, pindahkan kedua nilainya ke `.env` dan kosongkan kembali kedua baris di template. Compose memakai `.env`. Pada jalur pengembangan `npm run dev`, gunakan `.env.local` seperti di modul.
+
+   ```dotenv
+   NEXT_PUBLIC_SUPABASE_URL=https://PROJECT_REF.supabase.co
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_GANTI
+   ```
+
+#### 2. Bangun ulang layanan web
+
+Di terminal dari folder yang memuat `compose.yaml`, jalankan dua perintah berikut bila stack awal sehat.
+
+```bash
+docker compose config --quiet
+docker compose up -d --build --wait --no-deps web
+```
+
+Jika seluruh stack berhenti, gunakan `docker compose up -d --build --wait` setelah pemeriksaan konfigurasi berhasil. Nilai publik masuk pada waktu build. Langkah ini memakai kembali volume PostgreSQL dan Redis yang sudah ada. [Variabel publik pada Next.js](https://nextjs.org/docs/app/guides/environment-variables#bundling-environment-variables-for-the-browser)
+
+Muat ulang Cloud Notes. Di laptop, buka [port 3000](http://127.0.0.1:3000). Di Codespaces, buka **Ports → 3000 → Open in Browser** dan pertahankan visibilitas **Private**. Pastikan halaman menampilkan **Mode aktif: Supabase**.
+
+#### 3. Masuk, simpan, dan cocokkan baris di Supabase
+
+1. Jika sudah punya akun aplikasi yang dikonfirmasi pada proyek tadi, klik **Masuk** memakai akun latihan itu. Akun untuk membuka Dashboard Supabase berbeda dari akun aplikasi yang tercatat pada **Authentication → Users**.
+2. Jika perlu mendaftar, salin alamat Cloud Notes dari browser dan tambahkan di **Authentication → URL Configuration → Redirect URLs**. Gunakan alamat aplikasi lengkap dengan `https://` di Codespaces atau `http://127.0.0.1:3000` jika itu yang kamu buka di laptop. Aplikasi mengirim alamat asal tab saat kamu klik **Daftar**. Selesaikan konfirmasi email lalu kembali ke Cloud Notes. [Konfigurasi redirect Supabase](https://supabase.com/docs/guides/auth/redirect-urls)
+3. Pada **Tulis catatan**, pakai judul unik, misalnya `Uji Supabase Lab 08 13.30`, dan isi singkat yang aman dibagikan. Klik **Simpan** dan pastikan catatan muncul di aplikasi.
+4. Di dashboard proyek yang sama, buka **Table Editor → public → notes**. Klik **Filter** pada kolom `title` dan cari judul tadi. Cocokkan `title`, `content`, dan `user_id`. Ini membuktikan permintaan aplikasi membuat baris pada proyek Supabase tersebut.
+5. Untuk menunjukkan pembaruan, ubah **hanya** isi catatan uji yang tadi dibuat melalui Table Editor. Simpan, lalu muat ulang Cloud Notes menggunakan akun yang sama dan cocokkan isi baru. Table Editor memakai akses dashboard. Untuk menguji RLS melalui aplikasi, keluar lalu masuk dengan akun latihan kedua. Akun kedua hanya melihat baris miliknya.
+
+Checker **12 uji** dan counter Prometheus memeriksa jalur API lokal Lab 08. Untuk menguji jalur Supabase, gunakan hasil penulisan di Table Editor dan hasil baca pada akun aplikasi. Untuk kembali ke mode lokal, kosongkan dua nilai Supabase di `.env`, ulangi build layanan `web`, dan muat ulang halaman.
+
+#### Jika Codespace lama berhenti pada `args must be a mapping`
+
+- Kesalahan ini muncul sebelum build. Buka `compose.yaml` melalui Explorer. Pada bagian `services → web → build`, baris `args:` sejajar dengan `target: web`. Ganti isinya memakai blok di bawah, termasuk spasi setelah titik dua dan kurung kurawal. Gunakan dua baris `ARG` tanpa nilai di `Dockerfile` pada stage `build` sebelum `RUN npm run build`.
+
+  ```yaml
+        args:
+          NEXT_PUBLIC_SUPABASE_URL: "${NEXT_PUBLIC_SUPABASE_URL:-}"
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}"
+  ```
+
+  Dalam file asli, `args:` memiliki enam spasi awal dan dua baris di bawahnya memiliki delapan spasi awal. [Lihat blok utuh di compose.yaml](compose.yaml) · [Lihat ARG di Dockerfile](Dockerfile)
+- Jalankan `docker compose config --quiet`. Jika valid, perintah selesai tanpa pesan. Jika nilai Supabase terbaca kosong, pastikan nama file benar-benar `.env` dan kedua nilai proyek terisi. Setelah itu ulangi perintah build pada langkah 2.
+- Jika salinanmu masih memuat konfigurasi lama dan kamu ingin mempertahankan edit, buat Codespace baru dari branch kelas. Pada Codespace baru, bagian `args` sudah tersedia, sehingga kamu cukup membuat `.env` dan mengikuti langkah 2. Codespace lama bisa tetap dipakai untuk mengambil catatan atau perubahanmu.
+
+Untuk membuat skema Supabase dan menerbitkan aplikasi ke Vercel, ikuti [bagian tambahan modul mahasiswa](MODUL_MAHASISWA.md#tambahan-b-supabase-dan-vercel).

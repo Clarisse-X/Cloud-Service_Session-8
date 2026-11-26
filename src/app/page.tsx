@@ -37,7 +37,11 @@ export default function Home() {
     setBusy(true); setMessage('')
     try {
       const result = signup
-        ? await supabase.auth.signUp({ email, password })
+        ? await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        })
         : await supabase.auth.signInWithPassword({ email, password })
       if (result.error) throw result.error
       setMessage(signup && !result.data.session ? 'Cek email untuk konfirmasi akun, lalu masuk.' : 'Autentikasi berhasil.')

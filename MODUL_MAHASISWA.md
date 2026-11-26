@@ -2,9 +2,20 @@
 
 **Kebijakan kelas:** Lab ini latihan formatif, tanpa tugas, nilai, atau penyerahan terpisah. Satu proyek besar dikerjakan oleh kelompok **3 orang**, dengan presentasi checkpoint minggu 7 (UTS) dan hasil akhir minggu 14 (UAS). Simpan hasil lab hanya bila berguna sebagai referensi atau bukti proses proyek. Baca [brief proyek kelompok](PROYEK_KELOMPOK.md). Bobot resmi tetap mengikuti RPS/LMS.
 
-**Subtopik:** App Router, halaman dan komponen, GET/POST Route Handler, batas kode browser/server, konfigurasi Supabase, serta Git deployment ke Vercel. Praktik utama berjalan **lokal di Windows dengan PowerShell**. Bagian cloud berada setelah praktik lokal selesai.
+**Subtopik:** App Router, halaman dan komponen, GET/POST Route Handler, batas kode browser/server, monitoring aplikasi, dan integrasi Supabase Auth serta RLS. Docker Desktop di laptop adalah jalur utama. GitHub Codespaces menyediakan jalur yang sama dari browser. Node.js manual dan Vercel tersedia sebagai pengayaan.
 
-Untuk praktik kelas dengan Docker, ikuti [jalur laptop atau GitHub Codespaces di README](README.md#lab-08--cloud-notes-dengan-nextjs-dan-docker-compose). Langkah di bawah memakai jalur manual dengan Node.js di Windows.
+## Praktik utama dengan Docker
+
+1. Di laptop Windows, buka Docker Desktop, unduh atau clone branch `lab08-docker-codespaces`, lalu buka PowerShell pada folder yang memuat `compose.yaml`. Di Codespaces, masuk ke GitHub dan buka branch kelas, pilih **Code → Codespaces → Create codespace on lab08-docker-codespaces**, lalu tunggu proses awal selesai. [Jalur Docker Desktop](README.md#a-docker-di-laptop) · [Jalur Codespaces](README.md#b-github-codespaces)
+2. Jalankan `docker compose up -d --build --wait`, lalu `docker compose ps`. Cari empat service **healthy**. Di laptop buka `http://127.0.0.1:3000`. Di Codespaces pilih **Ports → Cloud Notes (3000) → Open in Browser** dan pertahankan port **Private**. Halaman awal membaca **Mode aktif: API lokal**.
+3. Simpan satu catatan dan refresh. Buka `/api/health` dan `/api/ready` pada host Cloud Notes. Keduanya harus berstatus 200 saat stack sehat. Di terminal jalankan `docker compose exec -T web npm run check:local` dan cari `12 PASS, 0 FAIL`. [Latihan inti dan pemeriksaan web](README.md#latihan-inti-untuk-kedua-jalur)
+4. Gunakan `docker compose --profile monitoring up -d --build --wait` untuk menambahkan Prometheus dan Grafana. Simpan satu catatan baru, amati counter, lalu tulis rule satu menit dan panel sendiri bila waktu memungkinkan. [Monitoring dan panel Grafana dari nol](README.md#monitoring-cloud-notes)
+5. Siapkan Supabase latihan, aktifkan mode cloud lewat file `.env`, lalu simpan dan periksa catatan di Table Editor. [Integrasi Supabase dan bukti data](#tambahan-b-supabase-dan-vercel)
+6. Setelah latihan selesai, jalankan `docker compose --profile monitoring down`. Di Codespaces, lanjutkan dengan **Stop codespace**. `down` mempertahankan volume. Berkas `.env` tetap di salinan kerjamu. [Penutupan latihan](README.md#selesai-latihan)
+
+## Jalur pengayaan dengan Node.js
+
+Bagian 1–8 memakai tiga terminal di Windows untuk memperlihatkan hubungan antar repo secara manual. Mahasiswa yang memakai Docker dapat langsung membuka bagian B ketika praktik utama selesai.
 
 ## 1. Siapkan tiga terminal
 
@@ -174,7 +185,7 @@ curl.exe -i http://localhost:3000/api/notes
 Hasil yang diharapkan: **200, 503, 503**. Next.js masih hidup, tetapi backend tidak tersedia. Refresh browser untuk melihat pesan API lokal gagal.
 
 3. Di terminal 1 pulihkan dengan `docker compose up -d --wait api`. Ulangi ready dan notes di terminal 3; keduanya kembali **200**, dan catatan lama tetap terlihat.
-4. Dari terminal 3 jalankan `npm run check:local`. Checker membuat satu catatan berjudul `Lab08-check-...` dan menguji penulisan serta pembacaan. Target **9 PASS, 0 FAIL**. Checker tidak menggantikan pemahaman aliran request.
+4. Dari terminal 3 jalankan `npm run check:local`. Checker membuat satu catatan berjudul `Lab08-check-...` dan menguji penulisan serta pembacaan. Target **12 PASS, 0 FAIL**. Cocokkan judul yang dibuat checker pada daftar catatan.
 
 ![Readiness saat API berhenti](screenshots/08_ready_503_aktual.png)
 
@@ -182,18 +193,20 @@ Hasil yang diharapkan: **200, 503, 503**. Next.js masih hidup, tetapi backend ti
 
 ## Tambahan B. Supabase dan Vercel
 
-Jalur ini memerlukan akun Supabase, GitHub, dan Vercel. Praktik lokal tetap selesai tanpa akun tersebut. Deployment publik memakai Supabase karena API `localhost` di laptop tidak dapat diakses dari Vercel.
+### B1. Integrasi Supabase pada Docker Desktop dan Codespaces
 
-1. Di proyek Supabase, buka **SQL Editor** dan jalankan `schema.sql` dari [Lab 07](https://github.com/SeedFlora/meet7CloudService). Tabel `notes` menyimpan `user_id` dan policy RLS milik pengguna.
-2. Isi `.env.local` di root Lab 08 dengan `NEXT_PUBLIC_SUPABASE_URL` serta `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` milik proyek. Pertahankan `LOCAL_API_URL` untuk latihan lokal; mode Supabase aktif ketika dua variabel publik terisi.
-3. Hentikan server dan jalankan kembali `npm run dev`. Halaman harus menyebut **Mode aktif: Supabase**. Klik **Daftar**, gunakan akun latihan, selesaikan konfirmasi email yang diminta, kemudian **Masuk** dan buat catatan.
-4. Keluar dan ulangi dengan akun latihan kedua. Akun kedua tidak boleh melihat catatan pertama. Policy memakai JWT pengguna melalui `auth.uid()`; publishable key saja tidak memberi identitas pengguna.
-5. Buat repo milik sendiri melalui **Use this template** pada GitHub Lab 08. Ikuti [panduan Git opsional](PANDUAN_GIT.md) untuk menyimpan source ke repo itu. `.env.local`, `.next`, dan `node_modules` tetap diabaikan Git.
-6. Di Vercel pilih **Add New → Project**, import repo pribadi, framework **Next.js**, root directory **`.`**. Isi dua variabel `NEXT_PUBLIC_SUPABASE_*` pada environment project sebelum deploy. Jangan mengisi `LOCAL_API_URL` dengan alamat laptop sebagai backend publik.
-7. Klik **Deploy**, buka URL hasilnya, lalu uji login dan catatan dua akun. Perubahan environment publik memerlukan deployment baru karena nilainya masuk bundle pada build.
-8. Push perubahan tampilan kecil ke branch pribadi dan amati deployment baru. Branch nonproduksi memberi preview; branch produksi memberi deployment produksi. Custom domain tambahan dapat dipasang melalui **Settings → Domains** dengan mengikuti record DNS yang ditampilkan Vercel untuk domain sendiri.
+1. Pilih proyek latihan di [Dashboard Supabase](https://supabase.com/dashboard/projects). Cari tabel `public.notes` di **Table Editor**. Jika tabel belum ada, jalankan [`schema.sql` Lab 07](https://github.com/SeedFlora/meet7CloudService/blob/main/schema.sql) dari **SQL Editor**. Tabel memakai `id`, `user_id`, `title`, `content`, dan `created_at`. Periksa bahwa RLS aktif dan policy SELECT serta INSERT untuk akun yang masuk memakai kepemilikan melalui `auth.uid()`.
+2. Ambil **Project URL** dan **Publishable key** pada bagian **Connect**. Masukkan kedua nilai proyek yang sama ke `.env`, satu folder dengan `compose.yaml`. Saat memakai jalur Node.js manual, isi `.env.local` dan mulai ulang `npm run dev`. [Panduan file konfigurasi dan contoh nilai](README.md#mode-supabase-di-docker-compose)
+3. Untuk Docker dari stack yang sudah sehat, jalankan `docker compose config --quiet`, lalu `docker compose up -d --build --wait --no-deps web`. Jika semua service sebelumnya berhenti, pakai `docker compose up -d --build --wait`. Buka Cloud Notes pada port **3000** dan cari **Mode aktif: Supabase**.
+4. Masuk dengan akun aplikasi yang sudah dikonfirmasi. Untuk membuat akun baru, daftarkan dulu alamat Cloud Notes yang lengkap pada **Authentication → URL Configuration → Redirect URLs**. Klik **Daftar**, konfirmasi email bila diminta, lalu buka lagi aplikasi melalui port **Private** di Codespaces. [URL autentikasi Supabase](https://supabase.com/docs/guides/auth/redirect-urls)
+5. Simpan judul uji yang unik, misalnya `Bukti Supabase Lab 08 13.30`. Pada **Table Editor → public → notes**, filter `title` dan cocokkan `content` serta `user_id`. Untuk demonstrasi pembaruan, ubah isi baris uji ini melalui Table Editor, simpan, lalu refresh aplikasi. Jika memakai dua akun latihan, akun kedua hanya melihat baris miliknya melalui aplikasi.
+6. Ambil screenshot yang memperlihatkan mode Supabase, catatan uji di browser, dan baris yang sama di Table Editor. Samarkan alamat email, kata sandi, maupun nilai kunci. Checker 12 uji, Prometheus, dan Grafana pada langkah awal mengamati jalur API lokal. Gunakan bukti baris di dashboard untuk jalur Supabase.
 
-Screenshot cloud harus berasal dari proyek sendiri dan menyamarkan email/token. Tidak ada klaim bahwa gambar lokal membuktikan deploy cloud. Rujukan: [Route Handlers](https://nextjs.org/docs/app/getting-started/route-handlers), [Vercel Git](https://vercel.com/docs/git), [Supabase security](https://supabase.com/docs/guides/database/secure-data).
+### B2. Pengayaan deploy di Vercel
+
+1. Buat repo sendiri melalui **Use this template** pada GitHub Lab 08 dan ikuti [panduan Git](PANDUAN_GIT.md). File `.env` dan `.env.local` tetap di salinan kerja.
+2. Di Vercel pilih **Add New → Project** dan import repo pribadi. Gunakan framework **Next.js** dan root directory **`.`**. Isi dua variabel Supabase publik di pengaturan environment project sebelum deploy.
+3. Klik **Deploy** dan buka URL hasilnya. Untuk membuat akun baru melalui URL itu, tambahkan URL aplikasi ke allowlist redirect di Supabase. Ulangi uji satu catatan dan cocokkan judul serta isinya di Table Editor. Perubahan environment publik memerlukan deployment baru karena nilainya masuk bundle pada build. [Panduan integrasi Git Vercel](https://vercel.com/docs/git)
 
 ## Kendala umum
 
@@ -202,6 +215,8 @@ Screenshot cloud harus berasal dari proyek sendiri dan menyamarkan email/token. 
 | Node/EBADENGINE | Gunakan Node 22+, buka ulang terminal, periksa versi sebelum `npm ci`. |
 | Port 3000 dipakai | Hentikan server Next.js lama atau lab lain yang memakai port ini. |
 | Ready 503 | Periksa Lab 06 di 18006 dan `LOCAL_API_URL` pada `.env.local`; restart Next setelah perubahan. |
-| Mode Supabase muncul saat ingin lokal | Kosongkan dua `NEXT_PUBLIC_SUPABASE_*`, lalu restart server. |
+| `services.web.build.args must be a mapping` | Perbaiki format YAML pada Codespace yang sudah diedit atau buat Codespace baru dari branch kelas. Validasi dengan `docker compose config --quiet`. [Contoh blok yang benar](README.md#jika-codespace-lama-berhenti-pada-args-must-be-a-mapping) |
+| Mode Supabase muncul saat ingin lokal | Kosongkan dua `NEXT_PUBLIC_SUPABASE_*` di `.env`, lalu bangun ulang `web`. Pada jalur Node manual, lakukan di `.env.local` dan mulai ulang server. |
+| Mode API lokal muncul saat ingin Supabase | Cek nama `.env` di samping `compose.yaml`. Isi dua nilai proyek, lalu build ulang `web` dengan `--build`. |
 | `npm ci` EPERM/ENOTEMPTY | Hentikan proses Next.js milik repo ini yang masih memakai `node_modules`, lalu ulangi instalasi. |
 | Build gagal | Baca file/baris yang dilaporkan TypeScript; perbaiki sebelum mengulang build. |

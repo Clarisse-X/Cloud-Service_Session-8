@@ -5,6 +5,9 @@ services:
     build:
       context: .
       target: web
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: "${NEXT_PUBLIC_SUPABASE_URL:-}"
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}"
     init: true
     environment:
       LOCAL_API_URL: http://api:8000
